@@ -63,7 +63,7 @@ Tất cả các Developer tham gia dự án **BẮT BUỘC** phải tuân thủ 
 
 ### 3.2. API Gateway là điểm vào duy nhất (Single Entry Point)
 *   Client (Mobile/Web) tuyệt đối không gọi trực tiếp các IP/Port của các Microservices bên trong mạng nội bộ.
-*   Mọi request đều phải đi qua API Gateway. Gateway đảm nhiệm các vai trò (Cross-cutting concerns): Xác thực Token (Authentication), Rate Limiting, CORS, và Routing định tuyến request đến đúng Service.
+*   Mọi request đều phải đi qua API Gateway. Gateway đảm nhiệm các vai trò (Cross-cutting concerns): Xác thực Token (Authentication - sử dụng JWKS từ Identity Service), Rate Limiting, CORS, và Routing định tuyến request đến đúng Service.
 
 ### 3.3. Asynchronous First (Ưu tiên Bất đồng bộ)
 *   Hệ thống ưu tiên sử dụng Message Broker (Event Bus) để liên lạc giữa các service khi có một trạng thái nghiệp vụ thay đổi (ví dụ: `BookingCompleted`).

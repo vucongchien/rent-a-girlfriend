@@ -3,7 +3,7 @@
 **Phân loại Subdomain:** Generic Subdomain
 
 ## 1. TRÁCH NHIỆM CHÍNH (RESPONSIBILITY)
-Xử lý xác thực người dùng, quản lý định danh, phân quyền, kiểm soát quy trình xét duyệt Onboarding, và quản lý chế tài xử phạt (khóa tài khoản).
+Xử lý xác thực người dùng (Google OAuth), cấp phát và quản lý vòng đời Token (Access/Refresh Token), phân quyền (RBAC), kiểm soát quy trình Onboarding, và quản lý chế tài xử phạt (khóa tài khoản).
 
 ## 2. AGGREGATES & ENTITIES
 ### Aggregate Root: `UserAccount`
@@ -30,3 +30,15 @@ Lưu trữ thông tin xác thực và trạng thái người dùng.
 
 ## 7. REPOSITORIES
 *   `IUserAccountRepository`: Quản lý lưu trữ trạng thái người dùng.
+
+## 8. CƠ CHẾ XÁC THỰC (AUTHENTICATION MECHANISM)
+
+Để đảm bảo tính độc lập và bảo mật, Identity Service áp dụng các cơ chế sau:
+
+*   **Token Pair:** Sau khi login qua Google, hệ thống cấp cặp Access Token (ngắn hạn) và Refresh Token (dài hạn).
+*   **Refresh Token Rotation:** Mỗi lần refresh token sẽ sinh ra một refresh token mới, vô hiệu hóa token cũ để chống tấn công replay.
+*   **Xác thực Phi tập trung (JWKS):** Identity Service cung cấp Public Keys qua endpoint `GET /.well-known/jwks.json`.
+    *   Các service khác (hoặc API Gateway) sử dụng các Public Keys này để tự xác thực JWT (Token-based Auth) mà không cần gọi trực tiếp tới Identity Service cho mỗi request.
+    *   Hỗ trợ Key Rotation (xoay khóa) định kỳ với Key ID (`kid`).
+
+*Chi tiết về thuật toán, cấu trúc payload và logic xoay vòng xem tại: [Auth Design Details](../reference/auth_implementation_details.md).*
