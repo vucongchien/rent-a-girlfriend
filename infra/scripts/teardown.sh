@@ -4,4 +4,4 @@ set -euo pipefail
 kind delete cluster --name micro || true
 docker rm -f local-registry || true
 
-echo "Cleaned up environment"
+echo "Base infra teared down"
