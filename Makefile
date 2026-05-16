@@ -7,7 +7,7 @@ deploy:
 
 mesh:
 	bash infra/scripts/istio-install.sh
-	kubectl apply -f infra/k8s/istio/
+	kubectl apply -f infra/istio/
 
 mesh-down:
 	bash infra/scripts/istio-uninstall.sh
