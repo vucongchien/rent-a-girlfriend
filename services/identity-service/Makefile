@@ -1,4 +1,6 @@
-.PHONY: run build test-unit test-integration test-e2e test-all docker-up docker-down tidy
+IMAGE_TAG ?= latest
+
+.PHONY: run build test-unit test-integration test-e2e test-all docker-up docker-down tidy deploy
 
 # Run locally
 run:
@@ -17,11 +19,12 @@ test-unit:
 test-integration:
 	go test ./tests/integration/... -v -count=1 -timeout 120s
 
-# E2E tests — spin up full stack, chạy tests, tear down
+# E2E tests — spin up full stack, chạy tests trong container, tear down
 # Cần Docker daemon đang chạy
 test-e2e:
-	docker compose -f docker-compose.test.yml up -d --build --wait
-	SERVER_PORT=8081 go test ./tests/e2e/... -v -count=1 -timeout 180s; \
+	docker compose -f docker-compose.test.yml build --no-cache
+	docker compose -f docker-compose.test.yml up -d --wait
+	docker compose -f docker-compose.test.yml run --rm e2e-runner; \
 	EXIT=$$?; \
 	docker compose -f docker-compose.test.yml down -v; \
 	exit $$EXIT
@@ -51,4 +54,4 @@ tidy:
 
 # Deploy to k8s
 deploy:
-	kubectl apply -f deployments/k8s/
+	bash deploy.sh $(IMAGE_TAG)
