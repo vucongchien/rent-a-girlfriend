@@ -15,7 +15,7 @@ globs: services/**/*
     - `internal/infrastructure/`: DB/Broker/Client adapters.
     - `internal/interfaces/`: HTTP/gRPC/PubSub handlers.
     - `deployments/`: K8s manifests và Istio policies riêng của service.
-    - `api/`: Contracts (Protobuf, OpenAPI, Event schemas).
+    - `gen/`: Code được generated từ Protobuf/AsyncAPI.
     - `docs/`: Tài liệu kỹ thuật riêng của service.
     - `tests/`: Integration & E2E tests.
 - **Principles**:
