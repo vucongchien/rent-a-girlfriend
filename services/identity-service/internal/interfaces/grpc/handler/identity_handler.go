@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	identityv1 "github.com/rent-a-girlfriend/identity-service/internal/gen/proto"
+	identityv1 "github.com/rent-a-girlfriend/identity-service/gen/proto"
 	"github.com/rent-a-girlfriend/identity-service/internal/application/command"
 	"github.com/rent-a-girlfriend/identity-service/internal/application/query"
 	"github.com/rent-a-girlfriend/identity-service/internal/interfaces/grpc/util"

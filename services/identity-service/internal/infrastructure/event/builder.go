@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	pb "github.com/rent-a-girlfriend/identity-service/internal/gen/proto"
+	pb "github.com/rent-a-girlfriend/identity-service/gen/proto"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )

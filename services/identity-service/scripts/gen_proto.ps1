@@ -21,7 +21,7 @@ $Env:Path += ";$env:USERPROFILE\go\bin"
 Write-Host ""
 Write-Host "==> [gen_proto] Generate gRPC & HTTP Gateway stubs"
 Write-Host "    contracts : $contracts"
-Write-Host "    output    : $serviceRoot\internal\gen\proto\"
+Write-Host "    output    : $serviceRoot\gen\proto\"
 Write-Host ""
 
 $protoFiles = @(

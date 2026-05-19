@@ -22,7 +22,7 @@ import (
 	grpcinterceptor "github.com/rent-a-girlfriend/identity-service/internal/interfaces/grpc/interceptor"
 	gateway "github.com/rent-a-girlfriend/identity-service/internal/interfaces/http"
 	"github.com/rent-a-girlfriend/identity-service/internal/infrastructure/messaging"
-	identityv1 "github.com/rent-a-girlfriend/identity-service/internal/gen/proto"
+	identityv1 "github.com/rent-a-girlfriend/identity-service/gen/proto"
 )
 
 // Server holds all wired dependencies.

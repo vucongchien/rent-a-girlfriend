@@ -19,7 +19,7 @@ export PATH="$PATH:$HOME/go/bin"
 echo ""
 echo "==> [gen_proto] Generate gRPC & HTTP Gateway stubs"
 echo "    contracts : $CONTRACTS"
-echo "    output    : $SERVICE_ROOT/internal/gen/proto/"
+echo "    output    : $SERVICE_ROOT/gen/proto/"
 echo ""
 
 PROTO_FILES=(
@@ -75,4 +75,4 @@ protoc \
     --grpc-gateway_opt=logtostderr=true \
     "$CONTRACTS/identity/v1/service/identity_service.proto"
 
-echo "==> [gen_proto] Done! All files generated successfully inside internal/gen/proto/"
+echo "==> [gen_proto] Done! All files generated successfully inside /gen/proto/"
