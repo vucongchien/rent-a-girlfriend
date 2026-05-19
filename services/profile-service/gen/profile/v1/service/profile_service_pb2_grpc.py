@@ -3,7 +3,20 @@
 import grpc
 import warnings
 
-from . import profile_pb2 as profile__pb2
+from profile.v1.messages import approve_profile_request_pb2 as profile_dot_v1_dot_messages_dot_approve__profile__request__pb2
+from profile.v1.messages import create_profile_request_pb2 as profile_dot_v1_dot_messages_dot_create__profile__request__pb2
+from profile.v1.messages import create_scenario_request_pb2 as profile_dot_v1_dot_messages_dot_create__scenario__request__pb2
+from profile.v1.messages import delete_scenario_request_pb2 as profile_dot_v1_dot_messages_dot_delete__scenario__request__pb2
+from profile.v1.messages import get_scenario_snapshot_request_pb2 as profile_dot_v1_dot_messages_dot_get__scenario__snapshot__request__pb2
+from profile.v1.messages import media_command_response_pb2 as profile_dot_v1_dot_messages_dot_media__command__response__pb2
+from profile.v1.messages import profile_command_response_pb2 as profile_dot_v1_dot_messages_dot_profile__command__response__pb2
+from profile.v1.messages import register_album_image_request_pb2 as profile_dot_v1_dot_messages_dot_register__album__image__request__pb2
+from profile.v1.messages import register_voice_intro_request_pb2 as profile_dot_v1_dot_messages_dot_register__voice__intro__request__pb2
+from profile.v1.messages import reject_profile_request_pb2 as profile_dot_v1_dot_messages_dot_reject__profile__request__pb2
+from profile.v1.messages import scenario_command_response_pb2 as profile_dot_v1_dot_messages_dot_scenario__command__response__pb2
+from profile.v1.messages import scenario_snapshot_response_pb2 as profile_dot_v1_dot_messages_dot_scenario__snapshot__response__pb2
+from profile.v1.messages import update_profile_request_pb2 as profile_dot_v1_dot_messages_dot_update__profile__request__pb2
+from profile.v1.messages import update_scenario_request_pb2 as profile_dot_v1_dot_messages_dot_update__scenario__request__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +31,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in profile_pb2_grpc.py depends on'
+        + ' but the generated code in profile/v1/service/profile_service_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,53 +49,53 @@ class ProfileServiceStub(object):
         """
         self.CreateProfile = channel.unary_unary(
                 '/profile.v1.ProfileService/CreateProfile',
-                request_serializer=profile__pb2.CreateProfileRequest.SerializeToString,
-                response_deserializer=profile__pb2.ProfileCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_create__profile__request__pb2.CreateProfileRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
                 _registered_method=True)
         self.UpdateProfile = channel.unary_unary(
                 '/profile.v1.ProfileService/UpdateProfile',
-                request_serializer=profile__pb2.UpdateProfileRequest.SerializeToString,
-                response_deserializer=profile__pb2.ProfileCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_update__profile__request__pb2.UpdateProfileRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
                 _registered_method=True)
         self.ApproveProfile = channel.unary_unary(
                 '/profile.v1.ProfileService/ApproveProfile',
-                request_serializer=profile__pb2.ApproveProfileRequest.SerializeToString,
-                response_deserializer=profile__pb2.ProfileCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_approve__profile__request__pb2.ApproveProfileRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
                 _registered_method=True)
         self.RejectProfile = channel.unary_unary(
                 '/profile.v1.ProfileService/RejectProfile',
-                request_serializer=profile__pb2.RejectProfileRequest.SerializeToString,
-                response_deserializer=profile__pb2.ProfileCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_reject__profile__request__pb2.RejectProfileRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
                 _registered_method=True)
         self.CreateScenario = channel.unary_unary(
                 '/profile.v1.ProfileService/CreateScenario',
-                request_serializer=profile__pb2.CreateScenarioRequest.SerializeToString,
-                response_deserializer=profile__pb2.ScenarioCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_create__scenario__request__pb2.CreateScenarioRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
                 _registered_method=True)
         self.UpdateScenario = channel.unary_unary(
                 '/profile.v1.ProfileService/UpdateScenario',
-                request_serializer=profile__pb2.UpdateScenarioRequest.SerializeToString,
-                response_deserializer=profile__pb2.ScenarioCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_update__scenario__request__pb2.UpdateScenarioRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
                 _registered_method=True)
         self.DeleteScenario = channel.unary_unary(
                 '/profile.v1.ProfileService/DeleteScenario',
-                request_serializer=profile__pb2.DeleteScenarioRequest.SerializeToString,
-                response_deserializer=profile__pb2.ScenarioCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_delete__scenario__request__pb2.DeleteScenarioRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
                 _registered_method=True)
         self.RegisterVoiceIntro = channel.unary_unary(
                 '/profile.v1.ProfileService/RegisterVoiceIntro',
-                request_serializer=profile__pb2.RegisterVoiceIntroRequest.SerializeToString,
-                response_deserializer=profile__pb2.MediaCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_register__voice__intro__request__pb2.RegisterVoiceIntroRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.FromString,
                 _registered_method=True)
         self.RegisterAlbumImage = channel.unary_unary(
                 '/profile.v1.ProfileService/RegisterAlbumImage',
-                request_serializer=profile__pb2.RegisterAlbumImageRequest.SerializeToString,
-                response_deserializer=profile__pb2.MediaCommandResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_register__album__image__request__pb2.RegisterAlbumImageRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.FromString,
                 _registered_method=True)
         self.GetScenarioSnapshot = channel.unary_unary(
                 '/profile.v1.ProfileService/GetScenarioSnapshot',
-                request_serializer=profile__pb2.GetScenarioSnapshotRequest.SerializeToString,
-                response_deserializer=profile__pb2.ScenarioSnapshotResponse.FromString,
+                request_serializer=profile_dot_v1_dot_messages_dot_get__scenario__snapshot__request__pb2.GetScenarioSnapshotRequest.SerializeToString,
+                response_deserializer=profile_dot_v1_dot_messages_dot_scenario__snapshot__response__pb2.ScenarioSnapshotResponse.FromString,
                 _registered_method=True)
 
 
@@ -163,53 +176,53 @@ def add_ProfileServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateProfile': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateProfile,
-                    request_deserializer=profile__pb2.CreateProfileRequest.FromString,
-                    response_serializer=profile__pb2.ProfileCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_create__profile__request__pb2.CreateProfileRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.SerializeToString,
             ),
             'UpdateProfile': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateProfile,
-                    request_deserializer=profile__pb2.UpdateProfileRequest.FromString,
-                    response_serializer=profile__pb2.ProfileCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_update__profile__request__pb2.UpdateProfileRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.SerializeToString,
             ),
             'ApproveProfile': grpc.unary_unary_rpc_method_handler(
                     servicer.ApproveProfile,
-                    request_deserializer=profile__pb2.ApproveProfileRequest.FromString,
-                    response_serializer=profile__pb2.ProfileCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_approve__profile__request__pb2.ApproveProfileRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.SerializeToString,
             ),
             'RejectProfile': grpc.unary_unary_rpc_method_handler(
                     servicer.RejectProfile,
-                    request_deserializer=profile__pb2.RejectProfileRequest.FromString,
-                    response_serializer=profile__pb2.ProfileCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_reject__profile__request__pb2.RejectProfileRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.SerializeToString,
             ),
             'CreateScenario': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateScenario,
-                    request_deserializer=profile__pb2.CreateScenarioRequest.FromString,
-                    response_serializer=profile__pb2.ScenarioCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_create__scenario__request__pb2.CreateScenarioRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.SerializeToString,
             ),
             'UpdateScenario': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateScenario,
-                    request_deserializer=profile__pb2.UpdateScenarioRequest.FromString,
-                    response_serializer=profile__pb2.ScenarioCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_update__scenario__request__pb2.UpdateScenarioRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.SerializeToString,
             ),
             'DeleteScenario': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteScenario,
-                    request_deserializer=profile__pb2.DeleteScenarioRequest.FromString,
-                    response_serializer=profile__pb2.ScenarioCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_delete__scenario__request__pb2.DeleteScenarioRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.SerializeToString,
             ),
             'RegisterVoiceIntro': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterVoiceIntro,
-                    request_deserializer=profile__pb2.RegisterVoiceIntroRequest.FromString,
-                    response_serializer=profile__pb2.MediaCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_register__voice__intro__request__pb2.RegisterVoiceIntroRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.SerializeToString,
             ),
             'RegisterAlbumImage': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterAlbumImage,
-                    request_deserializer=profile__pb2.RegisterAlbumImageRequest.FromString,
-                    response_serializer=profile__pb2.MediaCommandResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_register__album__image__request__pb2.RegisterAlbumImageRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.SerializeToString,
             ),
             'GetScenarioSnapshot': grpc.unary_unary_rpc_method_handler(
                     servicer.GetScenarioSnapshot,
-                    request_deserializer=profile__pb2.GetScenarioSnapshotRequest.FromString,
-                    response_serializer=profile__pb2.ScenarioSnapshotResponse.SerializeToString,
+                    request_deserializer=profile_dot_v1_dot_messages_dot_get__scenario__snapshot__request__pb2.GetScenarioSnapshotRequest.FromString,
+                    response_serializer=profile_dot_v1_dot_messages_dot_scenario__snapshot__response__pb2.ScenarioSnapshotResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -237,8 +250,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/CreateProfile',
-            profile__pb2.CreateProfileRequest.SerializeToString,
-            profile__pb2.ProfileCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_create__profile__request__pb2.CreateProfileRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -264,8 +277,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/UpdateProfile',
-            profile__pb2.UpdateProfileRequest.SerializeToString,
-            profile__pb2.ProfileCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_update__profile__request__pb2.UpdateProfileRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -291,8 +304,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/ApproveProfile',
-            profile__pb2.ApproveProfileRequest.SerializeToString,
-            profile__pb2.ProfileCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_approve__profile__request__pb2.ApproveProfileRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -318,8 +331,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/RejectProfile',
-            profile__pb2.RejectProfileRequest.SerializeToString,
-            profile__pb2.ProfileCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_reject__profile__request__pb2.RejectProfileRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_profile__command__response__pb2.ProfileCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -345,8 +358,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/CreateScenario',
-            profile__pb2.CreateScenarioRequest.SerializeToString,
-            profile__pb2.ScenarioCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_create__scenario__request__pb2.CreateScenarioRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -372,8 +385,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/UpdateScenario',
-            profile__pb2.UpdateScenarioRequest.SerializeToString,
-            profile__pb2.ScenarioCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_update__scenario__request__pb2.UpdateScenarioRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -399,8 +412,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/DeleteScenario',
-            profile__pb2.DeleteScenarioRequest.SerializeToString,
-            profile__pb2.ScenarioCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_delete__scenario__request__pb2.DeleteScenarioRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_scenario__command__response__pb2.ScenarioCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -426,8 +439,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/RegisterVoiceIntro',
-            profile__pb2.RegisterVoiceIntroRequest.SerializeToString,
-            profile__pb2.MediaCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_register__voice__intro__request__pb2.RegisterVoiceIntroRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -453,8 +466,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/RegisterAlbumImage',
-            profile__pb2.RegisterAlbumImageRequest.SerializeToString,
-            profile__pb2.MediaCommandResponse.FromString,
+            profile_dot_v1_dot_messages_dot_register__album__image__request__pb2.RegisterAlbumImageRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_media__command__response__pb2.MediaCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -480,8 +493,8 @@ class ProfileService(object):
             request,
             target,
             '/profile.v1.ProfileService/GetScenarioSnapshot',
-            profile__pb2.GetScenarioSnapshotRequest.SerializeToString,
-            profile__pb2.ScenarioSnapshotResponse.FromString,
+            profile_dot_v1_dot_messages_dot_get__scenario__snapshot__request__pb2.GetScenarioSnapshotRequest.SerializeToString,
+            profile_dot_v1_dot_messages_dot_scenario__snapshot__response__pb2.ScenarioSnapshotResponse.FromString,
             options,
             channel_credentials,
             insecure,
