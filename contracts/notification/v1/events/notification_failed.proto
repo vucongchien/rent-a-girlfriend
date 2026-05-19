@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package notification.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/notification;notificationv1";
+
+import "google/protobuf/timestamp.proto";
+
+// NotificationFailed — Phát ra khi đã retry hết số lần cho phép mà vẫn thất bại.
+//
+// CloudEvents type: rentagf.notification.failed.v1
+//
+// Lưu ý: Outbound event này tạm hoãn (deferred) ở MVP.
+// Sẽ implement khi có service khác cần lắng nghe (monitoring/alerting).
+message NotificationFailed {
+  // ID nội bộ của thông báo.
+  string notification_id = 1;
+
+  // ID người nhận.
+  string user_id = 2;
+
+  // ID event gốc đã trigger thông báo này.
+  string original_event_id = 3;
+
+  // Lý do thất bại.
+  string failure_reason = 4;
+
+  // Thời điểm chốt thất bại.
+  google.protobuf.Timestamp failed_at = 5;
+}
