@@ -8,7 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 // NotificationFailed — Phát ra khi đã retry hết số lần cho phép mà vẫn thất bại.
 //
-// CloudEvents type: rentagf.notification.failed.v1
+// CloudEvents type: com.rentagf.notification.NotificationFailed.v1
 //
 // Lưu ý: Outbound event này tạm hoãn (deferred) ở MVP.
 // Sẽ implement khi có service khác cần lắng nghe (monitoring/alerting).

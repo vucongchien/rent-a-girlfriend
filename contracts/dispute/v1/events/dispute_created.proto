@@ -12,4 +12,5 @@ message DisputeCreated {
   string reporter_id = 3;
   string reason = 4;
   google.protobuf.Timestamp occurred_at = 5;
+  string accused_id = 6; // ID của Companion bị khiếu nại (accused) nhận thông báo cảnh báo
 }

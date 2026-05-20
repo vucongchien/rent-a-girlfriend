@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
 
 // NotificationDelivered — Phát ra khi thông báo đã gửi thành công.
 //
-// CloudEvents type: rentagf.notification.delivered.v1
+// CloudEvents type: com.rentagf.notification.NotificationDelivered.v1
 //
 // Lưu ý: Outbound event này tạm hoãn (deferred) ở MVP.
 // Sẽ implement khi có service khác cần lắng nghe (tracking/audit).

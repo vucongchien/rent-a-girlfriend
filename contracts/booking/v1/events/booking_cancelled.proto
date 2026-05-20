@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package booking.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/booking;bookingv1";
+
+import "google/protobuf/timestamp.proto";
+
+message BookingCancelled {
+  string booking_id = 1;
+  string client_id = 2; // ID của Client liên quan đến booking hủy
+  string companion_id = 3; // ID của Companion liên quan đến booking hủy
+  string actor_role = 4; // Vai trò người hủy (CLIENT / COMPANION)
+  bool is_late = 5; // Có hủy trễ hay không
+  google.protobuf.Timestamp occurred_at = 6;
+}

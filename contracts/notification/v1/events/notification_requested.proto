@@ -15,7 +15,7 @@ import "notification/v1/messages/policy_overrides.proto";
 // để yêu cầu Notification Service giao một thông báo tới user.
 // Source service tự chịu trách nhiệm format nội dung (title, body).
 //
-// CloudEvents type: rentagf.notification.requested.v1
+// CloudEvents type: com.rentagf.notification.NotificationRequested.v1
 // Kafka topic: rentagf.notification.requested
 message NotificationRequested {
   // ID người nhận thông báo.

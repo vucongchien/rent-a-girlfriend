@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package profile.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/profile;profilev1";
+
+import "google/protobuf/timestamp.proto";
+
+message AlbumImageRejected {
+  string companion_id = 1; // ID của Companion nhận thông báo
+  string file_url = 2; // Đường dẫn ảnh bị từ chối
+  string reason = 3; // Lý do từ chối
+  google.protobuf.Timestamp occurred_at = 4;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package finance.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/finance;financev1";
+
+import "google/protobuf/timestamp.proto";
+
+message PayoutProcessed {
+  string booking_id = 1;
+  string companion_id = 2; // ID của Companion nhận thanh toán
+  int64 payout_amount = 3; // Số tiền thực nhận
+  int64 commission_amount = 4; // Phí hoa hồng
+  google.protobuf.Timestamp occurred_at = 5;
+}

@@ -45,13 +45,18 @@
       "oneOf": [
         { "$ref": "#/definitions/BookingRequestedPayload" },
         { "$ref": "#/definitions/BookingAcceptedPayload" },
+        { "$ref": "#/definitions/BookingRejectedPayload" },
         { "$ref": "#/definitions/BookingCancelledPayload" },
+        { "$ref": "#/definitions/BookingAcceptSagaFailedPayload" },
         { "$ref": "#/definitions/CoinFrozenPayload" },
         { "$ref": "#/definitions/CoinEscrowedPayload" },
+        { "$ref": "#/definitions/KanoCoinDepositedPayload" },
+        { "$ref": "#/definitions/DepositFailedPayload" },
         { "$ref": "#/definitions/PayoutProcessedPayload" },
         { "$ref": "#/definitions/ChatRoomCreatedPayload" },
         { "$ref": "#/definitions/ReviewSubmittedPayload" },
         { "$ref": "#/definitions/ReportCreatedPayload" },
+        { "$ref": "#/definitions/DisputeResolvedPayload" },
         { "$ref": "#/definitions/ViolationRecordedPayload" },
         { "$ref": "#/definitions/AccountLockedPayload" },
         { "$ref": "#/definitions/ProfileCreatedPayload" },
@@ -61,9 +66,13 @@
         { "$ref": "#/definitions/ScenarioCreatedPayload" },
         { "$ref": "#/definitions/ScenarioUpdatedPayload" },
         { "$ref": "#/definitions/ScenarioDeletedPayload" },
+        { "$ref": "#/definitions/ScenarioRejectedPayload" },
         { "$ref": "#/definitions/VoiceIntroUploadedPayload" },
         { "$ref": "#/definitions/VoiceIntroRejectedPayload" },
-        { "$ref": "#/definitions/AlbumImageUploadedPayload" }
+        { "$ref": "#/definitions/AlbumImageUploadedPayload" },
+        { "$ref": "#/definitions/AlbumImageRejectedPayload" },
+        { "$ref": "#/definitions/UpgradeApprovedPayload" },
+        { "$ref": "#/definitions/UpgradeRejectedPayload" }
       ]
     },
     "extensions": {
@@ -92,24 +101,66 @@
     },
     "BookingAcceptedPayload": {
       "type": "object",
-      "required": ["bookingId", "companionId", "price", "sagaId"],
+      "required": ["bookingId", "clientId", "companionId", "price", "sagaId"],
       "properties": {
         "bookingId": { "type": "string", "format": "uuid" },
+        "clientId": { "type": "string", "format": "uuid", "description": "ID của Client nhận thông báo đặt lịch được chấp nhận" },
         "companionId": { "type": "string", "format": "uuid" },
         "price": { "type": "integer", "minimum": 1 },
         "sagaId": { "type": "string", "format": "uuid" }
       }
     },
-    "BookingCancelledPayload": {
+    "BookingRejectedPayload": {
       "type": "object",
-      "required": ["bookingId", "actorRole", "isLate"],
+      "required": ["bookingId", "clientId", "companionId", "reason"],
       "properties": {
         "bookingId": { "type": "string", "format": "uuid" },
+        "clientId": { "type": "string", "format": "uuid", "description": "ID của Client nhận thông báo từ chối đặt lịch" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion từ chối đặt lịch" },
+        "reason": { "type": "string", "description": "Lý do từ chối đặt lịch" }
+      }
+    },
+    "BookingCancelledPayload": {
+      "type": "object",
+      "required": ["bookingId", "clientId", "companionId", "actorRole", "isLate"],
+      "properties": {
+        "bookingId": { "type": "string", "format": "uuid" },
+        "clientId": { "type": "string", "format": "uuid", "description": "ID của Client liên quan đến booking hủy" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion liên quan đến booking hủy" },
         "actorRole": { "type": "string", "enum": ["CLIENT", "COMPANION"] },
         "isLate": { 
           "type": "boolean",
           "description": "True if cancelled under 24 hours prior to startTime (BR-06, BR-07a)."
         }
+      }
+    },
+    "BookingAcceptSagaFailedPayload": {
+      "type": "object",
+      "required": ["bookingId", "clientId", "companionId", "reason"],
+      "properties": {
+        "bookingId": { "type": "string", "format": "uuid" },
+        "clientId": { "type": "string", "format": "uuid", "description": "ID của Client nhận thông báo rollback giao dịch do lỗi hệ thống" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion liên quan đến sự kiện lỗi SAGA" },
+        "reason": { "type": "string", "description": "Lý do lỗi trong luồng SAGA chấp nhận đặt lịch" }
+      }
+    },
+    "KanoCoinDepositedPayload": {
+      "type": "object",
+      "required": ["transactionId", "userId", "amount"],
+      "properties": {
+        "transactionId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid", "description": "ID của User (Khách hàng) nhận thông báo nạp tiền thành công" },
+        "amount": { "type": "integer", "description": "Số lượng Kano-Coin nạp thành công" }
+      }
+    },
+    "DepositFailedPayload": {
+      "type": "object",
+      "required": ["transactionId", "userId", "amount", "reason"],
+      "properties": {
+        "transactionId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid", "description": "ID của User (Khách hàng) nhận thông báo nạp tiền thất bại" },
+        "amount": { "type": "integer", "description": "Số lượng Kano-Coin nạp lỗi" },
+        "reason": { "type": "string", "description": "Lý do nạp tiền thất bại" }
       }
     },
     "CoinFrozenPayload": {
@@ -134,7 +185,7 @@
       "required": ["bookingId", "companionId", "payoutAmount", "commissionAmount"],
       "properties": {
         "bookingId": { "type": "string", "format": "uuid" },
-        "companionId": { "type": "string", "format": "uuid" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion nhận thanh toán thu nhập" },
         "payoutAmount": { "type": "integer", "description": "Net amount paid to companion (BR-03 commission deduction)." },
         "commissionAmount": { "type": "integer", "description": "Amount withheld by system." }
       }
@@ -162,12 +213,24 @@
     },
     "ReportCreatedPayload": {
       "type": "object",
-      "required": ["disputeId", "bookingId", "reporterId", "reason"],
+      "required": ["disputeId", "bookingId", "reporterId", "accusedId", "reason"],
       "properties": {
         "disputeId": { "type": "string", "format": "uuid" },
         "bookingId": { "type": "string", "format": "uuid" },
         "reporterId": { "type": "string", "format": "uuid" },
+        "accusedId": { "type": "string", "format": "uuid", "description": "ID của Companion bị tố cáo nhận cảnh báo" },
         "reason": { "type": "string", "enum": ["NO_SHOW", "MISCONDUCT"] }
+      }
+    },
+    "DisputeResolvedPayload": {
+      "type": "object",
+      "required": ["disputeId", "bookingId", "clientId", "companionId", "resolution"],
+      "properties": {
+        "disputeId": { "type": "string", "format": "uuid" },
+        "bookingId": { "type": "string", "format": "uuid" },
+        "clientId": { "type": "string", "format": "uuid", "description": "ID của Client nhận kết quả giải quyết khiếu nại" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion nhận kết quả giải quyết khiếu nại" },
+        "resolution": { "type": "string", "description": "Chi tiết kết quả giải quyết tranh chấp" }
       }
     },
     "ViolationRecordedPayload": {
@@ -260,6 +323,15 @@
         "companionId": { "type": "string", "format": "uuid" }
       }
     },
+    "ScenarioRejectedPayload": {
+      "type": "object",
+      "required": ["scenarioId", "companionId", "reason"],
+      "properties": {
+        "scenarioId": { "type": "string", "format": "uuid" },
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion nhận thông báo kịch bản bị từ chối" },
+        "reason": { "type": "string", "description": "Lý do kịch bản bị từ chối" }
+      }
+    },
     "VoiceIntroUploadedPayload": {
       "type": "object",
       "required": ["companionId", "assetId", "fileUrl", "durationSeconds", "sizeBytes"],
@@ -288,6 +360,34 @@
         "assetId": { "type": "string", "format": "uuid" },
         "fileUrl": { "type": "string", "format": "uri" },
         "sizeBytes": { "type": "integer", "maximum": 2097152 }
+      }
+    },
+    "AlbumImageRejectedPayload": {
+      "type": "object",
+      "required": ["companionId", "fileUrl", "reason"],
+      "properties": {
+        "companionId": { "type": "string", "format": "uuid", "description": "ID của Companion nhận thông báo ảnh album bị từ chối" },
+        "fileUrl": { "type": "string", "format": "uri" },
+        "reason": { "type": "string", "description": "Lý do ảnh bị từ chối" }
+      }
+    },
+    "UpgradeApprovedPayload": {
+      "type": "object",
+      "required": ["userId", "requestId", "approvedBy"],
+      "properties": {
+        "userId": { "type": "string", "format": "uuid", "description": "ID của User nhận thông báo nâng cấp thành Companion thành công" },
+        "requestId": { "type": "string", "format": "uuid" },
+        "approvedBy": { "type": "string", "format": "uuid" }
+      }
+    },
+    "UpgradeRejectedPayload": {
+      "type": "object",
+      "required": ["userId", "requestId", "rejectedBy", "reason"],
+      "properties": {
+        "userId": { "type": "string", "format": "uuid", "description": "ID của User nhận thông báo từ chối nâng cấp" },
+        "requestId": { "type": "string", "format": "uuid" },
+        "rejectedBy": { "type": "string", "format": "uuid" },
+        "reason": { "type": "string", "description": "Lý do từ chối nâng cấp" }
       }
     }
   }

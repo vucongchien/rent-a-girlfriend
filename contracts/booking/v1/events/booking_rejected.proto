@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package booking.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/booking;bookingv1";
+
+import "google/protobuf/timestamp.proto";
+
+message BookingRejected {
+  string booking_id = 1;
+  string client_id = 2; // ID của Client bị từ chối
+  string companion_id = 3; // ID của Companion từ chối
+  string reason = 4; // Lý do từ chối
+  google.protobuf.Timestamp occurred_at = 5;
+}

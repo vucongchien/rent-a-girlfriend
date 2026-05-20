@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package finance.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/finance;financev1";
+
+import "google/protobuf/timestamp.proto";
+
+message DepositFailed {
+  string transaction_id = 1;
+  string user_id = 2; // ID của User nhận thông báo lỗi nạp tiền
+  int64 amount = 3; // Số lượng Kano-Coin dự kiến nạp
+  string reason = 4; // Lý do lỗi
+  google.protobuf.Timestamp occurred_at = 5;
+}

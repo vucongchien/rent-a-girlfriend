@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package booking.v1;
+
+option go_package = "github.com/rent-a-girlfriend/contracts/proto/booking;bookingv1";
+
+import "google/protobuf/timestamp.proto";
+
+message BookingAcceptSagaFailed {
+  string booking_id = 1;
+  string client_id = 2; // ID của Client để thông báo lỗi và hoàn tiền
+  string companion_id = 3; // ID của Companion liên quan
+  string reason = 4; // Lý do lỗi SAGA
+  google.protobuf.Timestamp occurred_at = 5;
+}

@@ -10,4 +10,7 @@ message DisputeResolved {
   string dispute_id = 1;
   string resolution = 2;
   google.protobuf.Timestamp occurred_at = 3;
+  string booking_id = 4; // ID của Booking liên quan đến tranh chấp
+  string client_id = 5; // ID của Client nhận kết quả khiếu nại
+  string companion_id = 6; // ID của Companion nhận kết quả khiếu nại
 }
