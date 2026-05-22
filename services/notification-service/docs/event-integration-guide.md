@@ -5,7 +5,7 @@ Tài liệu này dành cho **các team phát triển services khác** (Booking, 
 > [!IMPORTANT]
 > **Nguyên tắc cốt lõi:**
 > 1. **Events phải self-contained** — Notification KHÔNG gọi ngược source service để lấy thêm data.
-> 2. **Idempotency** — Duplicate events (cùng `eventId`) sẽ bị reject tự động.
+> 2. **Idempotency** — Trùng lặp thông báo (dựa trên cặp composite key `idempotency_key` và `user_id`) sẽ bị reject tự động.
 > 3. **Notification KHÔNG quyết định** gửi hay không gửi — chỉ thực thi theo policy đính kèm hoặc cấu hình mặc định.
 
 ---
@@ -172,5 +172,5 @@ Khi service của bạn muốn trigger notification, hãy kiểm tra:
 - [ ] Event payload có chứa **đủ** required fields theo bảng ở mục 2 không?
 - [ ] Recipient field (`user_id`, `client_id`, `companion_id`...) có đúng UUID không?
 - [ ] Event đã được publish lên đúng topic trên Kafka không?
-- [ ] `eventId` (CloudEvents `id` field) có unique không? (Dùng UUID)
+- [ ] `id` (CloudEvents `id` field, được map làm `idempotency_key`) có unique không? (Dùng UUID)
 - [ ] Nếu dùng Passive Channel: `classification_type` và `priority` có đúng enum không?

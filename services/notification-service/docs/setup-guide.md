@@ -4,7 +4,7 @@
 
 | Tool | Version | Mô tả |
 |:---|:---|:---|
-| **Java** | 17+ | JDK (Oracle hoặc OpenJDK) |
+| **Java** | 21 | JDK (Oracle hoặc OpenJDK) |
 | **Gradle** | 8.x | Build tool (hoặc dùng `./gradlew` wrapper đi kèm) |
 | **PostgreSQL** | 15+ | Database chính |
 | **Redis** | 7+ | Pub/Sub cho SSE phân tán |
@@ -64,10 +64,10 @@ docker compose up -d
 
 ## Cài đặt thủ công (WSL/Linux)
 
-### Java 17
+### Java 21
 ```bash
 sudo apt update
-sudo apt install openjdk-17-jdk -y
+sudo apt install openjdk-21-jdk -y
 java --version
 ```
 

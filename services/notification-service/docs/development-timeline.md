@@ -2,9 +2,9 @@
 
 ## Tổng quan
 
-**Notification Service** = **Delivery Hub** — làm chủ cuộc chơi về thông báo. Define mình cần gì, các team follow.
+**Notification Service** = **Delivery Hub** — làm chủ cuộc chơi về thông báo. Định nghĩa những gì service cần và các service khác sẽ follow.
 
-**Tech Stack**: Java / Spring Boot
+**Tech Stack**: Java 21 / Spring Boot 3.5.0 / Gradle / Spring Data JPA / Spring Kafka / PostgreSQL / Redis
 
 ---
 
@@ -13,12 +13,12 @@
 ```mermaid
 graph LR
     PM1["Phase -1<br/>Event Integration<br/>Spec cho Team"] --> P0["Phase 0<br/>Project Skeleton"]
-    P0 --> P1["Phase 1<br/>Domain + DB"]
+    P0 --> P1["Phase 1<br/>Domain + DB + Async Core"]
     P1 --> P2["Phase 2<br/>SSE Realtime"]
     P1 --> P4["Phase 4<br/>REST API"]
     P2 --> P3["Phase 3<br/>Event Consumer<br/>+ Routing"]
     P4 --> P3
-    P3 --> P5["Phase 5<br/>FCM + Retry"]
+    P3 --> P5["Phase 5<br/>FCM + Email + Retry"]
 
     style PM1 fill:#ff6348,color:#fff,stroke-width:3px
     style P0 fill:#6c5ce7,color:#fff
@@ -41,11 +41,11 @@ Tài liệu **đối ngoại** — source of truth cho team. Nội dung:
 
 #### 1. Bảng Event Subscription
 
-| Strategy | Ý nghĩa | Source Service cần làm gì |
-|:---|:---|:---|
-| 🟢 **Smart Consumer** | Notification tự lắng nghe, tự dịch thành thông báo | Publish event đúng payload |
-| 🟡 **Passive Subscriber** | Service gọi qua `notification.requested.v1` | Tự format nội dung |
-| ⚪ **Ignore (hiện tại)** | Không lắng nghe ở thời điểm này | — |
+| Strategy                 | Ý nghĩa                                            | Source Service cần làm gì  |
+| :----------------------- | :------------------------------------------------- | :------------------------- |
+| 🟢 **Smart Consumer**     | Notification tự lắng nghe, tự dịch thành thông báo | Publish event đúng payload |
+| 🟡 **Passive Subscriber** | Service gọi qua `notification.requested.v1`        | Tự format nội dung         |
+| ⚪ **Ignore (hiện tại)**  | Không lắng nghe ở thời điểm này                    | —                          |
 
 > [!TIP]
 > **Khả năng mở rộng cho Ignore events**: Bất kỳ event nào hiện đang Ignore đều có thể được "bật" thành Smart Consumer trong tương lai chỉ bằng cách thêm config vào `templates.yaml` + subscribe topic mới. Ngoài ra, kênh **Passive Subscriber** (`notification.requested.v1`) luôn mở — bất kỳ service nào cũng có thể gửi notification bất cứ lúc nào mà không cần Notification Service biết trước nghiệp vụ.
@@ -60,189 +60,69 @@ Với mỗi Smart Consumer event, define rõ:
 
 #### 3. Passive Channel Contract (`notification.requested.v1`)
 
-#### 4. Integration Notes cho Team
-- Events phải **self-contained** — Notification KHÔNG gọi ngược source service
-- Duplicate events bị reject (idempotency qua `eventId`)
-- Notification KHÔNG quyết định gửi hay không — chỉ thực thi theo policy
+#### 4. Quy tắc Tích hợp (Integration Notes)
+- Các sự kiện phải **self-contained** (Tự đóng gói thông tin) — Notification KHÔNG gọi ngược lại source service để lấy thêm dữ liệu.
+- Trùng lặp event sẽ bị loại bỏ (Idempotency Guard qua `idempotency_key`).
 
 ---
 
-### Phạm vi phân tích events
+## Phase 0: Project Skeleton (Java 21 / Spring Boot 3.5.0) - [ĐÃ HOÀN THÀNH]
 
-#### Booking Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `booking.requested.v1` | 🟢 Smart | Companion | Yêu cầu đặt lịch mới |
-| `booking.accepted.v1` | 🟢 Smart | Client | Companion chấp nhận |
-| `booking.rejected.v1` | 🟢 Smart | Client | Companion từ chối |
-| `booking.cancelled.v1` | 🟢 Smart | Đối phương | Hủy lịch |
-
-#### Finance Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `finance.topup.completed.v1` | 🟢 Smart | Client | Nạp Kano-Coin thành công |
-| `finance.payout.processed.v1` | 🟢 Smart | Companion | Nhận thanh toán |
-
-#### Interaction Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `chat.message.sent.v1` | 🟢 Smart | RecipientId | Tin nhắn mới |
-| `interaction.review.submitted.v1` | 🟢 Smart | Companion | Nhận đánh giá mới |
-
-#### Profile Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `profile.companion.approved.v1` | 🟢 Smart | UserId | Hồ sơ Companion được duyệt |
-| `profile.companion.rejected.v1` | 🟢 Smart | UserId | Hồ sơ Companion bị từ chối |
-| `profile.scenario.rejected.v1` | 🟢 Smart | CompanionId | Scenario bị từ chối (vi phạm nội dung) |
-| `profile.voice_intro.rejected.v1` | 🟢 Smart | CompanionId | Voice intro bị từ chối |
-| `profile.album_image.rejected.v1` | 🟢 Smart | CompanionId | Ảnh album bị từ chối |
-
-#### Identity Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `identity.upgrade.approved.v1` | 🟢 Smart | UserId | Yêu cầu nâng cấp Companion được duyệt |
-| `identity.upgrade.rejected.v1` | 🟢 Smart | UserId | Yêu cầu nâng cấp bị từ chối |
-| `identity.account.locked.v1` | 🟢 Smart | UserId | Tài khoản bị khóa do vi phạm |
-
-#### Dispute Context
-
-| Event | Strategy | Recipient | Mô tả |
-|:---|:---|:---|:---|
-| `dispute.report.created.v1` | 🟢 Smart | Accused | Bạn bị báo cáo |
-| `dispute.resolved.v1` | 🟢 Smart | Cả 2 bên | Kết quả khiếu nại |
-
-#### Ignore (hiện tại)
-
-| Event | Lý do | Mở rộng sau |
-|:---|:---|:---|
-| `finance.coin.frozen/escrowed.v1` | SAGA nội bộ | Passive channel nếu cần |
-| `chat.room.created.v1` | User đã biết từ booking.accepted | Passive channel nếu cần |
-| `profile.created/updated.v1` | Thao tác của chính user | Passive channel nếu cần |
-| `scenario.created/updated/deleted.v1` | Thao tác nội bộ companion | Passive channel nếu cần |
-| `voice/album.uploaded.v1` | Chỉ upload, chưa có kết quả | Passive channel nếu cần |
-| `identity.violation.recorded.v1` | Nội bộ hệ thống, account.locked đã cover | Smart Consumer nếu cần cảnh báo |
-
----
-
-### Đồng bộ docs nội bộ
-
-Sau khi `event-integration-guide.md` xong, cập nhật:
-- `domain-event-mapping.md` — thêm events mới (Profile rejections, Identity upgrade, Dispute, Review)
-- `templates.yaml` — thêm templates vi/en cho events mới
-- `README.md` — link tài liệu mới
-
-### Tiêu chí Done
-- [ ] `docs/event-integration-guide.md` hoàn chỉnh
-- [ ] Toàn bộ events phân loại Smart/Passive/Ignore
-- [ ] Mỗi Smart Consumer event có payload requirements
-- [ ] `domain-event-mapping.md` + `templates.yaml` sync
-- [ ] Team đọc xong biết chính xác cần publish gì
-
----
-
-## Phase 0: Project Skeleton (Java / Spring Boot)
-
-**Mục tiêu**: Dựng bộ khung Java theo Hexagonal Architecture.
+**Mục tiêu**: Dựng bộ khung Java theo Hexagonal Architecture và tích hợp các thư viện nền tảng.
 
 ### Deliverables
 
-| Task | Mô tả |
-|:---|:---|
-| Init Spring Boot project | Spring Initializr hoặc manual |
-| Hexagonal Folder Structure | `domain/`, `application/`, `interfaces/`, `infrastructure/` |
-| Config Management | `application.yml` — DB, Redis, Broker |
-| Logging | SLF4J + Logback, structured JSON |
-| Error Framework | Domain errors → HTTP mapping |
-| Build tool | Maven/Gradle, profiles (dev/prod) |
-
-### Folder Structure
-
-```
-notification-service/
-├── src/main/java/com/rentagf/notification/
-│   ├── domain/              # Pure business logic
-│   │   ├── model/           # Notification, DeliveryAttempt
-│   │   ├── event/           # Domain Events
-│   │   └── port/            # Repository interfaces
-│   ├── application/         # Use Cases
-│   │   ├── usecase/         # SendNotification, MarkRead...
-│   │   └── port/            # Driven ports (SSE, FCM, Email)
-│   ├── interfaces/          # Driving Adapters (Input)
-│   │   ├── rest/            # REST Controllers
-│   │   ├── sse/             # SSE Controller
-│   │   └── consumer/        # Message Broker Listener
-│   └── infrastructure/      # Driven Adapters (Output)
-│       ├── persistence/     # JPA/JDBC Repository impl
-│       ├── redis/           # Pub/Sub adapter
-│       ├── fcm/             # Firebase adapter (Mock)
-│       └── smtp/            # Email adapter (Mock)
-├── src/main/resources/
-│   ├── application.yml
-│   ├── db/migration/        # Flyway migrations
-│   └── templates.yaml
-├── src/test/
-│   ├── unit/
-│   ├── integration/
-│   └── README.md
-└── docs/
-```
-
-### Tiêu chí Done
-- [ ] Build thành công (`mvn clean compile` hoặc `gradle build`)
-- [ ] Config loader hoạt động
-- [ ] Logger structured JSON output
-- [ ] Health check endpoint `/actuator/health`
+| Nhiệm vụ                   | Trạng thái   | Chi tiết                                                                  |
+| :------------------------- | :----------- | :------------------------------------------------------------------------ |
+| Khởi tạo Spring Boot 3.5.0 | 🟢 Hoàn thành | Java 21, Gradle làm công cụ build chính.                                  |
+| Cấu trúc Thư mục Lục giác  | 🟢 Hoàn thành | Chia rõ rệt: `domain/`, `application/`, `interfaces/`, `infrastructure/`. |
+| Cấu hình Hệ thống          | 🟢 Hoàn thành | Quản lý qua `application.yml` (DB PostgreSQL, Redis, Kafka).              |
+| Actuator & Health Check    | 🟢 Hoàn thành | Kích hoạt endpoint `/actuator/health`.                                    |
 
 ---
 
-## Phase 1: Domain Layer + Database
+## Phase 1: Domain Layer + Database + Async Core - [PHASE HIỆN TẠI]
 
-**Mục tiêu**: Business logic thuần túy + DB schema. **Phase quan trọng nhất.**
+**Mục tiêu**: Xây dựng Core Business Logic thuần túy (Domain Model), Database Schema PostgreSQL và cấu hình Hàng đợi bất đồng bộ (Async Core) để sẵn sàng cho xử lý phi luồng.
 
 ### Deliverables
-- Enums: `NotificationType`, `Priority`, `Status`, `Channel`
-- `Notification` Aggregate Root + behaviors (`createAttempt`, `markAttemptSuccess`, `markAttemptFailed`, `hasExceededRetryLimit`)
-- `DeliveryAttempt` Entity
-- 3 Invariants: `[INV-N01]` Retry ≤ 3, `[INV-N02]` No attempt after COMPLETED, `[INV-N03]` Idempotency
-- State Machine + Failure Classification
-- Domain Errors
-- Repository Port (interface)
-- Flyway Migration: 2 bảng + 5 indexes
-- JPA/JDBC Repository Adapter
-
-### Unit Tests (Trọng tâm — 100% coverage cho Invariants + State Machine)
+- **Domain Model (Pure Java)**: 
+  - Hoàn thiện Aggregate Root `Notification` và Entity `DeliveryAttempt` không chứa annotation JPA.
+  - Tích hợp lớp kết quả gửi tin `SendResult` giàu ngữ cảnh.
+- **Bảo vệ 3 Invariants**:
+  - `[INV-N01]`: Giới hạn Retry tối đa 3 lần thất bại (Recoverable).
+  - `[INV-N02]`: Cấm tạo attempt mới sau khi Notification đã `COMPLETED`.
+  - `[INV-N03]`: Đảm bảo Idempotency qua composite UNIQUE constraint cho cặp `(idempotency_key, user_id)` ở DB.
+- **Cấu hình Async Core**:
+  - Tận dụng cơ chế Spring Async Executor mặc định kết hợp Java 21 Virtual Threads (SimpleAsyncTaskExecutor) không giới hạn để đạt hiệu năng xử lý IO tối đa.
+- **Flyway Migration & JPA Adapter**:
+  - Tạo script SQL `V2__create_notification_tables.sql` với các chỉ mục (Indexes) tối ưu hóa.
+  - Viết `NotificationJpaEntity`, `NotificationMapper` và triển khai `NotificationRepositoryImpl`.
+- **Refactor Error Handler**:
+  - Sửa đổi `GlobalExceptionHandler.java` trả về JSON lồng nhau đúng đặc tả `docs/api-contract.md §3` và thêm handler dự phòng cho Domain Exception.
 
 ### Tiêu chí Done
-- [ ] 3 Invariants bảo vệ bằng test (mỗi INV ≥ 3 cases)
-- [ ] State Machine transitions khớp `state-machine.md`
-- [ ] DB migration chạy thành công
-- [ ] Repository CRUD pass
+- [ ] Build thành công và toàn bộ 2 bảng cùng 5 indexes được migrate thành công ở DB.
+- [ ] Unit Tests đạt 100% test coverage cho Domain logic (Invariants & State Machine).
+- [ ] Integration Tests kiểm thử thành công lưu cascade và cursor-based pagination.
+- [ ] Viết tài liệu `TESTS_README.md` lập mục lục kiểm thử chi tiết.
 
 ---
 
 ## Phase 2: SSE Realtime Delivery
 
-**Mục tiêu**: Client mở SSE → nhận thông báo realtime. Redis Pub/Sub cho phân tán.
+**Mục tiêu**: Xây dựng cổng giao tiếp Server-Sent Events thời gian thực, tích hợp Redis Pub/Sub phục vụ môi trường phân tán (Distributed SSE).
 
 ### Deliverables
-- SSE Controller (`GET /v1/notifications/stream`) — Spring WebFlux SseEmitter
-- Connection Manager (ConcurrentHashMap, thread-safe)
-- Heartbeat (ping mỗi 15s)
-- Auth Header Extraction (`x-user-id`)
-- Redis Pub/Sub Adapter (Spring Data Redis)
-- Graceful Disconnect
+- SSE Controller (`GET /v1/notifications/stream`) sử dụng `SseEmitter` của Spring.
+- `SseConnectionRegistry` thread-safe (`ConcurrentHashMap`) quản lý đa kết nối của User, xử lý callback dọn dẹp kết nối chết.
+- Đẩy heartbeat (ping `: ping\n\n` mỗi 15s) để phát hiện và ngắt các connection hỏng.
+- Tích hợp Redis Pub/Sub Adapter (Spring Data Redis Listener) để định tuyến tin nhắn giữa các Pods.
 
 ### Tiêu chí Done
-- [ ] Client connect SSE, nhận heartbeat
-- [ ] Redis Publish → Client nhận qua SSE
-- [ ] Disconnect detection hoạt động
-- [ ] Multi-connection per user
+- [ ] Client kết nối SSE thành công và nhận heartbeat định kỳ.
+- [ ] Pod A gọi Redis Publish -> Pod B (giữ connection của Client) nhận được và đẩy tin xuống Client qua SSE stream thành công.
+- [ ] Dọn dẹp connection thành công khi Client tắt app hoặc mất mạng.
 
 ---
 
@@ -286,37 +166,36 @@ notification-service/
 
 ---
 
-## Phase 5: FCM Push + Retry
+## Phase 5: Outbound Providers (FCM Push & Email) + Retry Execution
 
-**Dependencies**: Phase 3
+**Mục tiêu**: Hiện thực hóa việc gửi tin thực tế tới các Provider bên ngoài (Firebase Cloud Messaging, SMTP Server) và triển khai cơ chế Retry trì hoãn (Backoff) không block luồng.
 
 ### Deliverables
-- FCM Adapter (Mock)
-- Thread Pool (ExecutorService / Virtual Threads)
-- Exponential Backoff (2s → 4s → 8s)
-- Failure Classification (Recoverable → Retry, Unrecoverable → Fail ngay)
-- Email Adapter (Mock)
+- **FCM Outbound Adapter (Mock)**: Đọc FCM Token và thực thi gửi push.
+- **Email Outbound Adapter (Mock)**: Thực thi gửi mail thông báo.
+- **Chính sách Retry trì hoãn**:
+  - Tích hợp Java `ScheduledExecutorService` để lên lịch chạy lại sau khoảng thời gian backoff (2s -> 4s -> 8s cho FCM; 5s -> 15s -> 45s cho Email) đối với lỗi `recoverable = true`.
+  - Phân loại lỗi chính xác từ kết quả gửi (`SendResult`) để quyết định ngắt ngay (lỗi Unrecoverable) hay thử lại (lỗi Recoverable).
 
 ### Tiêu chí Done
-- [ ] SSE fail → FCM fallback
-- [ ] Retry 3 lần → FAILED
-- [ ] Unrecoverable → skip retry
-- [ ] Thread pool graceful shutdown
+- [ ] SSE lỗi/offline -> Fallback tự động gọi FCM Push bất đồng bộ.
+- [ ] Firebase/SMTP báo lỗi Recoverable -> Lên lịch chạy lại thành công theo đúng chu kỳ backoff.
+- [ ] Firebase/SMTP báo lỗi Unrecoverable -> Đóng FAILED ngay lập tức và dừng retry.
 
 ---
 
 ## Tổng kết Timeline
 
-| Phase | Thời gian | Tích lũy |
-|:---|:---|:---|
-| Phase -1: Event Integration Spec | 3 ngày | 3 ngày |
-| Phase 0: Skeleton | 2 ngày | 5 ngày |
-| Phase 1: Domain + DB | 5 ngày | 10 ngày |
-| Phase 2: SSE (song song P4) | 5 ngày | 15 ngày |
-| Phase 4: REST API | 3 ngày | (song song) |
-| Phase 3: Consumer + Routing | 5 ngày | 20 ngày |
-| Phase 5: FCM + Retry | 5 ngày | 25 ngày |
-| **Tổng** | | **~25 ngày (~5 tuần)** |
+| Phase                            | Thời gian | Tích lũy               |
+| :------------------------------- | :-------- | :--------------------- |
+| Phase -1: Event Integration Spec | 3 ngày    | 3 ngày                 |
+| Phase 0: Skeleton                | 2 ngày    | 5 ngày                 |
+| Phase 1: Domain + DB             | 5 ngày    | 10 ngày                |
+| Phase 2: SSE (song song P4)      | 5 ngày    | 15 ngày                |
+| Phase 4: REST API                | 3 ngày    | (song song)            |
+| Phase 3: Consumer + Routing      | 5 ngày    | 20 ngày                |
+| Phase 5: FCM + Retry             | 5 ngày    | 25 ngày                |
+| **Tổng**                         |           | **~25 ngày (~5 tuần)** |
 
 ---
 
