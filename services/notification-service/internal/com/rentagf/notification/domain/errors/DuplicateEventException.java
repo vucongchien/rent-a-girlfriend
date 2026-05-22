@@ -5,8 +5,8 @@ package com.rentagf.notification.domain.errors;
  */
 public class DuplicateEventException extends NotificationDomainException {
 
-    public DuplicateEventException(String eventId, String userId) {
+    public DuplicateEventException(String idempotencyKey, String userId) {
         super("DUPLICATE_EVENT",
-                String.format("Event %s for user %s has already been processed", eventId, userId));
+                String.format("Event %s for user %s has already been processed", idempotencyKey, userId));
     }
 }
