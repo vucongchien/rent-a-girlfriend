@@ -35,3 +35,29 @@ Dự án tuân thủ **Hexagonal Architecture**, được chia làm 4 lớp chí
 - **[ADR-0003: SSE Authentication Strategy](./docs/adr/0003-sse-authentication-strategy.md)**: Quyết định cấm truyền JWT qua URL và bắt buộc dùng Header qua thư viện ngoài cho Frontend.
 - **[ADR-0004: Cursor-based Pagination](./docs/adr/0004-cursor-based-pagination-for-inbox.md)**: Quyết định sử dụng Cursor-based pagination thay vì Page-based cho API Inbox để tránh lỗi lặp data trong môi trường realtime.
 - **[ADR-0005: Hybrid Triggering](./docs/adr/0005-hybrid-notification-triggering-strategy.md)**: Chiến lược kết hợp giữa Smart Consumer (nghe Domain Events) và Passive Subscriber.
+- **[ADR-0006: Payload Design Strategy](./docs/adr/0006-payload-design-operational-flexibility-vs-type-safety.md)**: Quyết định lựa chọn Map (Operational Flexibility) thay vì Class Hierarchy (Type Safety) để tối ưu hóa sự tiến hóa liên tục của payload.
+- **[ADR-0007: Outbound Delivery & Error Handling](./docs/adr/0007-outbound-delivery-and-error-handling-strategy.md)**: Quy định về SendResult, Retry Policy riêng cho từng kênh gửi và cơ chế Async Queue / Worker Pool bất đồng bộ.
+
+---
+
+## 📈 BÁO CÁO TIẾN ĐỘ (DEVELOPMENT PROGRESS REPORTS)
+
+Các báo cáo tổng hợp tiến độ và đánh giá kỹ thuật của dự án theo dòng thời gian:
+- **[📅 Báo Cáo Tiến Độ 22-05-2026](./docs/time-line/22-05-2026.md)**: Đánh giá chi tiết hoàn thành Phase 0 & Phase 1, phát hiện các lỗi thiết kế Database UNIQUE constraint, Exception mapping và đề xuất lộ trình Phase 2 (SSE) & Phase 4 (REST API).
+
+---
+
+## 🧪 KIỂM THỬ KHÓI (SMOKE TESTING)
+
+Dịch vụ hỗ trợ một bộ Smoke Test chạy trong môi trường Docker Compose cô lập, tự động khởi động cơ sở dữ liệu PostgreSQL và Notification Service, sau đó thực hiện gọi kiểm tra Actuator Health Check để xác nhận dịch vụ khởi động hoàn toàn ổn định (`UP`).
+
+Để khởi chạy Smoke Test trên Windows:
+```powershell
+cd tests/smoke
+powershell -ExecutionPolicy Bypass -File .\smoke-test.ps1
+```
+
+Script sẽ tự động build image, cấu hình kết nối DB qua `DB_URL` khớp với cấu hình trong `application.yml`, kiểm tra trạng thái và dọn dẹp môi trường sau khi hoàn tất.
+
+
+
