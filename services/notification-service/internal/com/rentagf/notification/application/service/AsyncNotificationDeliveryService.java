@@ -6,54 +6,39 @@ import com.rentagf.notification.application.registry.NotificationSenderRegistry;
 import com.rentagf.notification.domain.aggregate.Notification;
 import com.rentagf.notification.domain.repository.NotificationRepository;
 import com.rentagf.notification.domain.vo.DeliveryAttempt;
-import com.rentagf.notification.domain.vo.enums.*;
-import com.rentagf.notification.domain.errors.DuplicateEventException;
+import com.rentagf.notification.domain.vo.enums.DeliveryChannel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Helper Service chịu trách nhiệm gửi tin vật lý bất đồng bộ (@Async) chạy trên Virtual Threads.
+ * Việc tách riêng ra class này đảm bảo Spring Proxy hoạt động chính xác (không bị AOP proxy bypass).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationApplicationService {
+public class AsyncNotificationDeliveryService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationSenderRegistry senderRegistry;
 
     /**
-     * Entry point gửi thông báo. Lưu DB ở trạng thái PENDING trước, sau đó kích hoạt luồng Async.
-     */
-    @Transactional
-    public Notification triggerNotification(UUID userId, String eventId, NotificationType type,
-                                            NotificationPriority priority, Map<String, Object> payload,
-                                            DeliveryChannel channel) {
-        log.info("Triggering notification for user: {}, eventId: {}, channel: {}", userId, eventId, channel);
-
-        // Bảo vệ [INV-N03]: Kiểm tra xem eventId đã tồn tại chưa để tránh xử lý trùng lặp (Idempotency Guard)
-        notificationRepository.findByEventIdAndUserId(eventId, userId).ifPresent(n -> {
-            throw new DuplicateEventException(eventId, userId.toString());
-        });
-
-        Notification notification = Notification.create(userId, eventId, type, priority, payload, Map.of());
-        Notification saved = notificationRepository.save(notification);
-
-        // Kích hoạt gửi bất đồng bộ
-        sendAsync(saved.getId(), channel);
-
-        return saved;
-    }
-
-    /**
      * Gửi tin bất đồng bộ chạy trên Virtual Threads.
+     * Sử dụng transaction độc lập để ghi nhận từng attempt gửi tin.
+     *
+     * @param notificationId ID của Notification.
+     * @param channel        Kênh gửi tin vật lý.
      */
     @Async
+    @Transactional
     public void sendAsync(UUID notificationId, DeliveryChannel channel) {
-        log.info("Async sending notification: {} via channel: {}", notificationId, channel);
+        log.info("Async sending notification: {} via channel: {} inside thread: {}", 
+                notificationId, channel, Thread.currentThread());
 
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("Notification not found: " + notificationId));
@@ -68,7 +53,7 @@ public class NotificationApplicationService {
             NotificationSender sender = senderRegistry.getSender(channel)
                     .orElseThrow(() -> new IllegalArgumentException("No sender strategy found for channel: " + channel));
 
-            // 3. Thực thi gửi
+            // 3. Thực thi gửi vật lý thông qua Adapter
             SendResult result = sender.send(notification);
 
             // 4. Xử lý kết quả dựa trên Invariants & Failure Handling

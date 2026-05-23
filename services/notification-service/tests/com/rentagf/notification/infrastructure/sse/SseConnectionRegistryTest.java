@@ -17,11 +17,14 @@ class SseConnectionRegistryTest {
 
     private SseConnectionRegistry registry;
     private MockPubSubPort mockPubSubPort;
+    private MockConnectionStatePort mockConnectionStatePort;
 
     @BeforeEach
     void setUp() {
         mockPubSubPort = new MockPubSubPort();
-        registry = new SseConnectionRegistry(mockPubSubPort);
+        mockConnectionStatePort = new MockConnectionStatePort();
+        SseLocalRegistry localRegistry = new SseLocalRegistry();
+        registry = new SseConnectionRegistry(localRegistry, mockPubSubPort, mockConnectionStatePort);
     }
 
     @Test
@@ -202,6 +205,36 @@ class SseConnectionRegistryTest {
         public int getUnsubscribeCount(String channel) {
             AtomicInteger count = unsubscribeCounts.get(channel);
             return count != null ? count.get() : 0;
+        }
+    }
+
+    // --- Mock ConnectionStatePort Implementation ---
+    private static class MockConnectionStatePort implements com.rentagf.notification.application.port.outbound.ConnectionStatePort {
+        private final Map<UUID, Boolean> states = new ConcurrentHashMap<>();
+        private final Map<UUID, Long> ttls = new ConcurrentHashMap<>();
+
+        @Override
+        public void setOnline(UUID userId, long ttlSeconds) {
+            states.put(userId, true);
+            ttls.put(userId, ttlSeconds);
+        }
+
+        @Override
+        public void setOffline(UUID userId) {
+            states.remove(userId);
+            ttls.remove(userId);
+        }
+
+        @Override
+        public boolean isOnline(UUID userId) {
+            return states.getOrDefault(userId, false);
+        }
+
+        @Override
+        public void refreshHeartbeat(UUID userId, long ttlSeconds) {
+            if (states.containsKey(userId)) {
+                ttls.put(userId, ttlSeconds);
+            }
         }
     }
 }

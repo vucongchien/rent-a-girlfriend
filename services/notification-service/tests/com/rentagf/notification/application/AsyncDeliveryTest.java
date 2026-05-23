@@ -1,10 +1,13 @@
 package com.rentagf.notification.application;
 
+import com.rentagf.notification.application.port.outbound.ConnectionStatePort;
 import com.rentagf.notification.application.port.outbound.EmailPort;
 import com.rentagf.notification.application.port.outbound.FcmPort;
+import com.rentagf.notification.application.port.outbound.PubSubPort;
 import com.rentagf.notification.application.port.outbound.SendResult;
 import com.rentagf.notification.application.port.outbound.SsePort;
-import com.rentagf.notification.application.service.NotificationApplicationService;
+import com.rentagf.notification.application.port.inbound.SendNotificationUseCase;
+import com.rentagf.notification.application.port.inbound.TriggerNotificationUseCase;
 import com.rentagf.notification.domain.aggregate.Notification;
 import com.rentagf.notification.domain.repository.NotificationRepository;
 import com.rentagf.notification.domain.vo.enums.*;
@@ -25,15 +28,34 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+/**
+ * Integration test kiểm chứng luồng gửi thông báo bất đồng bộ trên Virtual Threads.
+ *
+ * <p>Sử dụng H2 in-memory (cấu hình trong tests/application.yml) và Mockito Beans
+ * để thay thế toàn bộ hạ tầng ngoài (Redis, Kafka, SMTP, FCM).
+ */
 @SpringBootTest
 @Tag("integration")
 class AsyncDeliveryTest {
 
     @Autowired
-    private NotificationApplicationService applicationService;
+    private SendNotificationUseCase applicationService;
+
+    @Autowired
+    private TriggerNotificationUseCase triggerService;
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    // --- Mock toàn bộ hạ tầng ngoài ---
+
+    /** Thay thế RedisConnectionStateAdapter – không cần Redis khi test. */
+    @MockitoBean
+    private ConnectionStatePort connectionStatePort;
+
+    /** Thay thế RedisPubSubAdapter – không cần StringRedisTemplate khi test. */
+    @MockitoBean
+    private PubSubPort pubSubPort;
 
     @MockitoBean
     private EmailPort emailPort;
@@ -46,10 +68,13 @@ class AsyncDeliveryTest {
 
     @BeforeEach
     void setUp() {
-        // Setup channels for mock strategies
+        // Stub channel để NotificationSenderRegistry map đúng strategy
         when(emailPort.getChannel()).thenReturn(DeliveryChannel.EMAIL);
         when(fcmPort.getChannel()).thenReturn(DeliveryChannel.FCM);
         when(ssePort.getChannel()).thenReturn(DeliveryChannel.SSE);
+
+        // Mặc định user offline – đảm bảo SendNotificationService không dispatch SSE
+        when(connectionStatePort.isOnline(any(UUID.class))).thenReturn(false);
     }
 
     @Test
@@ -57,20 +82,19 @@ class AsyncDeliveryTest {
         UUID userId = UUID.randomUUID();
         String eventId = "evt_async_success_" + UUID.randomUUID();
 
-        // Stub EmailPort to succeed
+        // Stub EmailPort trả về thành công
         when(emailPort.send(any(Notification.class)))
                 .thenReturn(SendResult.success("msg_email_ok"));
 
-        // Trigger notification
-        Notification triggered = applicationService.triggerNotification(
+        // Kích hoạt gửi thông báo
+        Notification triggered = triggerService.triggerNotification(
                 userId, eventId, NotificationType.TRANSACTIONAL, NotificationPriority.HIGH,
                 Map.of("title", "Hello Async"), DeliveryChannel.EMAIL
         );
 
-        // Main thread should return immediately, status could be PENDING or PROCESSING initially
         assertNotNull(triggered);
-        
-        // Wait using Awaitility for virtual threads to finish and verify final state in database
+
+        // Awaitility: chờ Virtual Thread gửi xong và cập nhật DB
         await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> {
                     Notification found = notificationRepository.findById(triggered.getId()).orElse(null);
@@ -87,11 +111,11 @@ class AsyncDeliveryTest {
         UUID userId = UUID.randomUUID();
         String eventId = "evt_async_unrecoverable_" + UUID.randomUUID();
 
-        // Stub FcmPort to return unrecoverable failure
+        // Stub FcmPort trả về lỗi không phục hồi được
         when(fcmPort.send(any(Notification.class)))
                 .thenReturn(SendResult.fail("FCM_TOKEN_INVALID", "Token is dead", false));
 
-        Notification triggered = applicationService.triggerNotification(
+        Notification triggered = triggerService.triggerNotification(
                 userId, eventId, NotificationType.TRANSACTIONAL, NotificationPriority.HIGH,
                 Map.of("title", "Hello FCM"), DeliveryChannel.FCM
         );
@@ -102,7 +126,7 @@ class AsyncDeliveryTest {
                 .untilAsserted(() -> {
                     Notification found = notificationRepository.findById(triggered.getId()).orElse(null);
                     assertNotNull(found);
-                    // Unrecoverable -> instantly FAILED
+                    // Unrecoverable → đóng FAILED ngay lập tức
                     assertEquals(NotificationStatus.FAILED, found.getStatus());
                     assertEquals(1, found.getAttempts().size());
                     assertEquals(AttemptStatus.FAILED_UNRECOVERABLE, found.getAttempts().get(0).getStatus());
@@ -115,18 +139,18 @@ class AsyncDeliveryTest {
         String eventId = "evt_duplicate_" + UUID.randomUUID();
 
         // Lần 1: Trigger thành công
-        Notification first = applicationService.triggerNotification(
+        Notification first = triggerService.triggerNotification(
                 userId, eventId, NotificationType.TRANSACTIONAL, NotificationPriority.HIGH,
                 Map.of("title", "First"), DeliveryChannel.EMAIL
         );
         assertNotNull(first);
 
-        // Lần 2: Trùng lặp -> Expect DuplicateEventException
-        assertThrows(DuplicateEventException.class, () -> {
-            applicationService.triggerNotification(
-                    userId, eventId, NotificationType.TRANSACTIONAL, NotificationPriority.HIGH,
-                    Map.of("title", "Second"), DeliveryChannel.EMAIL
-            );
-        });
+        // Lần 2: Cùng eventId + userId → phải throw DuplicateEventException
+        assertThrows(DuplicateEventException.class, () ->
+                triggerService.triggerNotification(
+                        userId, eventId, NotificationType.TRANSACTIONAL, NotificationPriority.HIGH,
+                        Map.of("title", "Second"), DeliveryChannel.EMAIL
+                )
+        );
     }
 }

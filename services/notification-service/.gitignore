@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Credentials & Secrets ###
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+*.json.bak
+.env
+

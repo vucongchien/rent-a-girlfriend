@@ -40,6 +40,20 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # --- Mail (Mailtrap Sandbox) ---
+  mail:
+    host: ${SMTP_HOST:sandbox.smtp.mailtrap.io}
+    port: ${SMTP_PORT:2525}
+    username: ${SMTP_USERNAME:c0042c33109bac}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   # --- Kafka ---
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -51,6 +65,8 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: manual
 
 # --- Server ---
 server:

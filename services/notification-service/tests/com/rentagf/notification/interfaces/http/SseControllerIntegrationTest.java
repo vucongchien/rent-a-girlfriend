@@ -7,10 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import com.rentagf.notification.application.port.outbound.ConnectionStatePort;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,8 +30,17 @@ class SseControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    /** Thay thế RedisPubSubAdapter – không cần StringRedisTemplate khi test. */
     @MockBean
-    private PubSubPort pubSubPort; // Mock để tháo gỡ Port gọi ra của Registry
+    private PubSubPort pubSubPort;
+
+    /** Thay thế RedisConnectionStateAdapter – không cần StringRedisTemplate khi test. */
+    @MockBean
+    private ConnectionStatePort connectionStatePort;
+
+    /** Tránh kết nối SMTP thực khi test. */
+    @MockBean
+    private JavaMailSender javaMailSender;
 
 
     @Test

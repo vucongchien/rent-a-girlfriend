@@ -62,6 +62,7 @@ public class SseController {
             try {
                 log.debug("Sending heartbeat ping to user {}", userId);
                 emitter.send(SseEmitter.event().comment("ping"));
+                connectionRegistry.heartbeat(userId); // Gia hạn online status trên Redis
             } catch (IOException e) {
                 log.warn("Failed to send heartbeat to user {}. Closing connection...", userId);
                 emitter.completeWithError(e);

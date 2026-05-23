@@ -1,5 +1,6 @@
 package com.rentagf.notification.infrastructure.sse;
 
+import com.rentagf.notification.application.port.outbound.ConnectionStatePort;
 import com.rentagf.notification.application.port.outbound.PubSubPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,29 +8,37 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Thread-safe Registry quản lý danh sách kết nối SSE cục bộ của người dùng trên Pod này.
- * Áp dụng cơ chế Reference Counting để đăng ký/hủy đăng ký subscribe động trên hạ tầng Pub/Sub.
+ * Orchestrator điều phối vòng đời kết nối SSE và đồng bộ trạng thái phân tán.
+ * Đảm bảo Single Responsibility Principle (SRP) bằng cách chỉ lo việc phối hợp các ports hạ tầng,
+ * uỷ thác hoàn toàn việc lưu trữ in-memory cục bộ cho SseLocalRegistry.
  */
 @Component
 public class SseConnectionRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(SseConnectionRegistry.class);
     private static final String CHANNEL_PREFIX = "user:%s:sse";
+    private static final long STATE_TTL_SECONDS = 45L; // TTL 45s (Heartbeat 15s + buffer)
 
-    private final Map<UUID, List<SseEmitter>> registry = new ConcurrentHashMap<>();
+    private final SseLocalRegistry localRegistry;
     private final PubSubPort pubSubPort;
+    private final ConnectionStatePort connectionStatePort;
 
-    public SseConnectionRegistry(PubSubPort pubSubPort) {
+    public SseConnectionRegistry(
+            SseLocalRegistry localRegistry,
+            PubSubPort pubSubPort,
+            ConnectionStatePort connectionStatePort) {
+        this.localRegistry = localRegistry;
         this.pubSubPort = pubSubPort;
+        this.connectionStatePort = connectionStatePort;
     }
 
     /**
-     * Đăng ký một kết nối SSE mới của User vào Registry cục bộ.
-     * Nếu đây là kết nối đầu tiên của User trên Pod này, kích hoạt subscribe kênh Pub/Sub.
+     * Đăng ký một kết nối SSE mới của User.
+     * Nếu đây là kết nối đầu tiên của User trên Pod này:
+     * - Kích hoạt subscribe kênh Pub/Sub.
+     * - Ghi nhận trạng thái Online lên Redis Connection State Store.
      *
      * @param userId  ID của người nhận (UUID)
      * @param emitter Đối tượng SseEmitter được tạo lập
@@ -40,22 +49,20 @@ public class SseConnectionRegistry {
             return;
         }
 
-        registry.compute(userId, (key, emitters) -> {
-            if (emitters == null) {
-                emitters = new CopyOnWriteArrayList<>();
-                String channel = getChannelName(userId);
-                log.info("First SSE connection for user {}. Activating subscription on channel: {}", userId, channel);
-                pubSubPort.subscribe(channel);
-            }
-            emitters.add(emitter);
-            log.debug("Registered SSE connection for user {}. Active connections on this pod: {}", userId, emitters.size());
-            return emitters;
-        });
+        boolean isFirst = localRegistry.add(userId, emitter);
+        if (isFirst) {
+            String channel = getChannelName(userId);
+            log.info("First SSE connection for user {}. Activating subscription on channel: {} and setting Redis Online status", userId, channel);
+            pubSubPort.subscribe(channel);
+            connectionStatePort.setOnline(userId, STATE_TTL_SECONDS);
+        }
     }
 
     /**
-     * Hủy đăng ký kết nối SSE của User khỏi Registry.
-     * Nếu đây là kết nối active cuối cùng của User trên Pod này, kích hoạt unsubscribe kênh Pub/Sub.
+     * Hủy đăng ký kết nối SSE của User.
+     * Nếu đây là kết nối active cuối cùng của User trên Pod này:
+     * - Kích hoạt unsubscribe kênh Pub/Sub.
+     * - Ghi nhận trạng thái Offline trên Redis.
      *
      * @param userId  ID của người nhận (UUID)
      * @param emitter Đối tượng SseEmitter cần hủy
@@ -65,34 +72,34 @@ public class SseConnectionRegistry {
             return;
         }
 
-        registry.computeIfPresent(userId, (key, emitters) -> {
-            boolean removed = emitters.remove(emitter);
-            if (removed) {
-                log.debug("Unregistered active SSE connection for user {}. Remaining connections: {}", userId, emitters.size());
-            }
-
-            if (emitters.isEmpty()) {
-                String channel = getChannelName(userId);
-                log.info("Last SSE connection closed for user {}. Deactivating subscription on channel: {}", userId, channel);
-                pubSubPort.unsubscribe(channel);
-                return null; // Xóa hoàn toàn key khỏi ConcurrentHashMap
-            }
-            return emitters;
-        });
+        boolean isLast = localRegistry.remove(userId, emitter);
+        if (isLast) {
+            String channel = getChannelName(userId);
+            log.info("Last SSE connection closed for user {}. Deactivating subscription on channel: {} and removing Redis Online status", userId, channel);
+            pubSubPort.unsubscribe(channel);
+            connectionStatePort.setOffline(userId);
+        }
     }
 
     /**
-     * Lấy danh sách toàn bộ kết nối SseEmitter đang active của User trên Pod này từ Registry.
+     * Nhận sự kiện Ping Heartbeat thành công từ Controller.
+     * Refresh lại TTL của trạng thái Online trên Redis để tránh hết hạn.
+     */
+    public void heartbeat(UUID userId) {
+        if (userId == null) return;
+        if (localRegistry.exists(userId)) {
+            connectionStatePort.refreshHeartbeat(userId, STATE_TTL_SECONDS);
+        }
+    }
+
+    /**
+     * Lấy danh sách toàn bộ kết nối SseEmitter đang active của User trên Pod này.
      *
      * @param userId ID của User
-     * @return Danh sách SseEmitter (trả về Empty List nếu User không có kết nối nào)
+     * @return Danh sách SseEmitter
      */
     public List<SseEmitter> getEmitters(UUID userId) {
-        if (userId == null) {
-            return Collections.emptyList();
-        }
-        List<SseEmitter> emitters = registry.get(userId);
-        return emitters != null ? Collections.unmodifiableList(emitters) : Collections.emptyList();
+        return localRegistry.getEmitters(userId);
     }
 
     /**
