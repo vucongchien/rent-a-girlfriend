@@ -61,4 +61,9 @@ public interface NotificationRepository {
      * @return số lượng thông báo đã được chuyển trạng thái sang đã đọc thành công
      */
     int markAllAsRead(UUID userId, Instant readAt);
+
+    /**
+     * Tìm tất cả notifications theo status và được tạo trước mốc thời gian (dùng cho Self-healing).
+     */
+    List<Notification> findAllByStatusAndCreatedAtBefore(com.rentagf.notification.domain.vo.enums.NotificationStatus status, Instant before);
 }

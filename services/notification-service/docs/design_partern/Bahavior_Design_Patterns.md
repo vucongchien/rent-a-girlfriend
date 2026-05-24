@@ -54,3 +54,23 @@
 *   **Tường minh nghiệp vụ (Ubiquitous Language)**: Exceptions phản ánh trực tiếp ngôn ngữ nghiệp vụ của dự án (`DUPLICATE_EVENT` thay vì lỗi kỹ thuật DB Constraint).
 *   **Trải nghiệm API xuất sắc**: API Client nhận được mã lỗi HTTP chuẩn chỉ (409 Conflict) kèm thông tin rõ ràng thay vì lỗi 500 chung chung.
 *   **Tách biệt tầng giao tiếp và tầng nghiệp vụ (Decoupling)**: Tầng nghiệp vụ chỉ cần ném lỗi nghiệp vụ, việc dịch lỗi sang JSON hay HTTP status code là của tầng HTTP Adapter.
+
+---
+
+## 4. Orchestrator Pattern (Mẫu Điều phối Luồng)
+
+*   **Dẫn chứng trong dự án**:
+    *   **Orchestrator**: [AsyncNotificationDeliveryService.java](file:///e:/LEARN/rent-a-girlfriend/services/notification-service/internal/com/rentagf/notification/application/service/AsyncNotificationDeliveryService.java)
+    *   **Transaction Helper**: [NotificationDeliveryTransactionService.java](file:///e:/LEARN/rent-a-girlfriend/services/notification-service/internal/com/rentagf/notification/application/service/NotificationDeliveryTransactionService.java)
+
+### 📝 Tại sao sử dụng và hoạt động thế nào?
+*   **Vấn đề**: Khi xử lý gửi tin bất đồng bộ, chúng ta cần phối hợp nhịp nhàng giữa việc thao tác cơ sở dữ liệu (Database) và gọi I/O mạng ngoại vi (FCM/Email). Nếu gom tất cả vào một transaction `@Transactional` dài, hệ thống sẽ bị treo Database do giữ connection quá lâu (Hikari Exhaustion).
+*   **Giải pháp**: Tách biệt luồng ra làm 3 bước và điều phối tập trung tại Orchestrator `AsyncNotificationDeliveryService`:
+    1.  Orchestrator gọi Transaction Helper thực hiện giao dịch ngắn 1 (Đọc Notification, tạo Attempt, lưu DB).
+    2.  Orchestrator thực thi cuộc gọi mạng vật lý (ngoài transaction, block I/O tự do).
+    3.  Orchestrator gọi Transaction Helper thực hiện giao dịch ngắn 2 (Cập nhật kết quả).
+    4.  Orchestrator đưa ra quyết định thực thi các side-effects ngoài transaction (retry trì hoãn, fallback SSE sang FCM).
+
+### 📈 Ưu điểm đạt được
+*   **Single Responsibility & High Performance**: Cô lập hoàn toàn transaction DB ra khỏi gọi mạng I/O dài, giải phóng 100% rủi ro sập connection pool HikariCP dưới tải cao.
+}

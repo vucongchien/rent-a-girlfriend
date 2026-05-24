@@ -37,4 +37,6 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationJpa
     int markAllAsRead(@Param("userId") UUID userId, @Param("readAt") Instant readAt, @Param("now") Instant now);
 
     boolean existsByIdAndUserId(UUID id, UUID userId);
+
+    List<NotificationJpaEntity> findAllByStatusAndCreatedAtBefore(String status, Instant before);
 }

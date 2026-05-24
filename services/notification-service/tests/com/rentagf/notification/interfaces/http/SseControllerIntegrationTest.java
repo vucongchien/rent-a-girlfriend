@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.rentagf.notification.application.port.outbound.ConnectionStatePort;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -31,15 +31,15 @@ class SseControllerIntegrationTest {
     private MockMvc mockMvc;
 
     /** Thay thế RedisPubSubAdapter – không cần StringRedisTemplate khi test. */
-    @MockBean
+    @MockitoBean
     private PubSubPort pubSubPort;
 
     /** Thay thế RedisConnectionStateAdapter – không cần StringRedisTemplate khi test. */
-    @MockBean
+    @MockitoBean
     private ConnectionStatePort connectionStatePort;
 
     /** Tránh kết nối SMTP thực khi test. */
-    @MockBean
+    @MockitoBean
     private JavaMailSender javaMailSender;
 
 

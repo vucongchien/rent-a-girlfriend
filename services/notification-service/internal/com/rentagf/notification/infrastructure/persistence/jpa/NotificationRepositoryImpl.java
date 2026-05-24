@@ -90,4 +90,10 @@ public class NotificationRepositoryImpl implements NotificationRepository {
         Instant readTime = readAt != null ? readAt : now;
         return jpaRepository.markAllAsRead(userId, readTime, now);
     }
+
+    @Override
+    public List<Notification> findAllByStatusAndCreatedAtBefore(com.rentagf.notification.domain.vo.enums.NotificationStatus status, Instant before) {
+        List<NotificationJpaEntity> entities = jpaRepository.findAllByStatusAndCreatedAtBefore(status.name(), before);
+        return entities.stream().map(mapper::toDomain).collect(Collectors.toList());
+    }
 }
